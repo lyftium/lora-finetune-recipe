@@ -57,10 +57,25 @@ If the problem is missing knowledge (documents, standards, part data that change
 
 ## Results
 
-RESULTS_PLACEHOLDER
+One measured run of `configs/qwen-0.5b-lora.yaml` on a CPU-only machine (8 cores, torch 2.5.1+cpu, transformers 4.46.3, peft 0.13.2). Same 100 held-out synthetic examples for both rows (test data hash `b89f85e0adae4406`), greedy decoding, 48 new tokens max. The raw reports are in [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/).
+
+| Qwen2.5-0.5B-Instruct | json_valid | exact_match | FCF (n=30) | dimension (n=33) | BOM row (n=37) |
+|---|---|---|---|---|---|
+| base model, no adapter | 0.66 | 0.00 | 0.00 | 0.00 | 0.00 |
+| + LoRA adapter | 1.00 | 0.97 | 0.90 | 1.00 | 1.00 |
+
+LoRA r=16 on the four attention projections: 2.16M trainable parameters out of 496M (0.44%). 150 steps at batch size 8 took 559 s on CPU; training loss went from 2.23 to 0.0003.
+
+How to read it, honestly:
+
+- The base model gets 0% exact match mostly because the prompt never tells it the schema. It answers with JSON of its own invention (`{"fields": [{"name": ...}]}`), and 34% of its answers don't parse at all (in the ones I inspected, generation hit the 48-token limit before the JSON closed). A fair comparison against prompting would add the schema and a few examples to the prompt; I haven't run that yet, and it would likely close part of the gap.
+- What the run does show is the point of the recipe: a narrow, fixed-format task, a baseline measured first on the same split, a small adapter, and a report you can trace back to code, config and data.
+- The 3 remaining errors are all feature control frames. This is synthetic data on one seed, not a claim about real drawings.
+- The adapter was trained before the first commit, so `train_run.json` has `git_sha: unknown`. Both eval reports were produced from commit `26853b1` with the same config hash (`96afd7dff9cf`).
 
 ## Not done yet
 
+- A prompted baseline (schema + few-shot examples in the prompt) on the same split, which is the comparison that actually decides whether fine-tuning is worth it here.
 - Multi-GPU training (DDP / FSDP via `accelerate`). I understand how it works but haven't run it here, so it's roadmap, not a claim.
 - Running the QLoRA 7B config on a GPU and adding its report.
 - Serving the adapter with vLLM's LoRA support and checking the served outputs against the offline eval.
