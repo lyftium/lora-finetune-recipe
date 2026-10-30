@@ -1,0 +1,16 @@
+# A small real instruct model. Runs on CPU in minutes, faster on any GPU.
+base_model: Qwen/Qwen2.5-0.5B-Instruct
+qlora: false
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+n_train: 400
+n_test: 100
+lr: 2.0e-4
+batch_size: 8
+max_steps: 150
+max_len: 96
+max_new_tokens: 48
+output_dir: outputs/qwen-0.5b-lora

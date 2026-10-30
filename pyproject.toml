@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lora-recipe"
+version = "0.1.0"
+description = "A small, honest LoRA / QLoRA fine-tuning and evaluation recipe with a CPU smoke test."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "torch>=2.4",
+  "transformers>=4.46,<4.47",
+  "peft>=0.13,<0.14",
+  "accelerate>=1.1,<2",
+  "pyyaml>=6,<7",
+]
+
+[project.optional-dependencies]
+qlora = ["bitsandbytes>=0.44"]  # CUDA only
+dev = ["pytest>=8.3", "ruff>=0.8"]
+
+[project.scripts]
+lora-recipe = "lora_recipe.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

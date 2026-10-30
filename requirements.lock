@@ -1,0 +1,7 @@
+# Versions used for the CPU smoke test and CI. torch from the CPU index:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
+torch==2.5.1
+transformers==4.46.3
+peft==0.13.2
+accelerate==1.1.1
+pyyaml==6.0.2

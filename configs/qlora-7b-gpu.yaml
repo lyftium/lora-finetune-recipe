@@ -1,0 +1,15 @@
+# QLoRA on a 7B model: 4-bit NF4 base, bf16 compute, LoRA adapters trained on top.
+# Needs one CUDA GPU (about 10-16 GB) and `pip install .[qlora]`. Not run in CI.
+base_model: Qwen/Qwen2.5-7B-Instruct
+qlora: true
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+n_train: 2000
+n_test: 300
+lr: 1.0e-4
+batch_size: 8
+max_steps: 500
+output_dir: outputs/qlora-7b
