@@ -1,0 +1,74 @@
+{
+  "kind": "train",
+  "timestamp": "2026-11-02T18:43:08+00:00",
+  "recipe_version": "0.1.0",
+  "git_sha": "9a55eed60fdf",
+  "config_hash": "bdb5d33ed608",
+  "config": {
+    "base_model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+    "revision": "main",
+    "qlora": false,
+    "lora": {
+      "r": 8,
+      "alpha": 16,
+      "dropout": 0.0,
+      "target_modules": [
+        "q_proj",
+        "v_proj"
+      ]
+    },
+    "n_train": 64,
+    "n_test": 16,
+    "seed": 0,
+    "lr": 0.005,
+    "batch_size": 4,
+    "max_steps": 20,
+    "max_len": 96,
+    "max_new_tokens": 32,
+    "output_dir": "outputs/tiny-ddp"
+  },
+  "data_hash": "661c3857dd6f8c22",
+  "libs": {
+    "torch": "2.5.1",
+    "transformers": "4.46.3",
+    "peft": "0.13.2"
+  },
+  "params": {
+    "total": 1033296,
+    "trainable": 1024,
+    "fraction": 0.000991
+  },
+  "steps": 20,
+  "seconds": 2.1,
+  "loss_first": 10.3817,
+  "loss_last": 10.312,
+  "losses": [
+    10.3817,
+    10.372,
+    10.3736,
+    10.358,
+    10.3724,
+    10.3605,
+    10.3531,
+    10.3401,
+    10.3338,
+    10.3363,
+    10.3283,
+    10.3256,
+    10.3277,
+    10.3199,
+    10.3253,
+    10.3068,
+    10.3121,
+    10.3149,
+    10.3186,
+    10.312
+  ],
+  "test_data_hash": "ccb72f1557eb6db5",
+  "distributed": {
+    "enabled": true,
+    "world_size": 2,
+    "backend": "gloo",
+    "device": "cpu"
+  }
+}
