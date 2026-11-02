@@ -1,6 +1,6 @@
 # lora-finetune-recipe
 
-> **Keywords for recruiters:** Python · PyTorch · Hugging Face · PEFT LoRA/QLoRA · LLM fine-tuning · baseline-vs-adapter evaluation · run lineage (reproducibility / audit spine) · CI smoke test · engineering annotation → JSON task
+> **Keywords for recruiters:** DDP / torchrun ·  Python · PyTorch · Hugging Face · PEFT LoRA/QLoRA · LLM fine-tuning · baseline-vs-adapter evaluation · run lineage (reproducibility / audit spine) · CI smoke test · engineering annotation → JSON task
 
 A small LoRA / QLoRA fine-tuning recipe that I can run, measure and reproduce, rather than a notebook that worked once — the training half of an MLOps train→eval→record loop.
 
@@ -78,7 +78,7 @@ How to read it, honestly:
 ## Not done yet
 
 - A prompted baseline (schema + few-shot examples in the prompt) on the same split, which is the comparison that actually decides whether fine-tuning is worth it here.
-- Multi-GPU training (DDP / FSDP via `accelerate`). I understand how it works but haven't run it here, so it's roadmap, not a claim.
+- **Distributed training (DDP):** implemented and exercised with `torchrun --nproc_per_node=2` (CPU **gloo**; CUDA uses **nccl**). See `docs/distributed-training.md` and `results/tiny-ddp/`. Cluster submit: companion `PyTorchJob` on OpenShift AI / Training Operator.
 - Running the QLoRA 7B config on a GPU and adding its report.
 - Serving the adapter with vLLM's LoRA support and checking the served outputs against the offline eval.
 
