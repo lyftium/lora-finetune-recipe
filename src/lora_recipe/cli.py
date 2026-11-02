@@ -23,6 +23,11 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("run")
     r.add_argument("--config", type=Path, required=True)
     r.add_argument("--skip-baseline", action="store_true")
+    r.add_argument(
+        "--distributed",
+        action="store_true",
+        help="use DDP (launch with torchrun; WORLD_SIZE>=2)",
+    )
     e = sub.add_parser("eval", help="score the base model, or base + a saved adapter")
     e.add_argument("--config", type=Path, required=True)
     e.add_argument("--adapter", type=Path, help="adapter directory saved by `run`")
@@ -42,7 +47,9 @@ def main(argv: list[str] | None = None) -> int:
         baseline = evaluate(base, load_tokenizer(cfg), test_rows, cfg.max_new_tokens)
         del base  # free the first copy before training loads its own
         gc.collect()
-    res = train(cfg, out)
+    res = train(cfg, out, distributed=args.distributed)
+    if res.get("rank", 0) != 0:
+        return 0  # only rank 0 evaluates and writes the report
     tuned = evaluate(res["model"], res["tokenizer"], res["test_rows"], cfg.max_new_tokens)
     report = {
         "baseline": baseline,
