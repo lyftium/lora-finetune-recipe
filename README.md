@@ -1,7 +1,5 @@
 # lora-finetune-recipe
 
-> **Keywords for recruiters:** DDP / torchrun ·  Python · PyTorch · Hugging Face · PEFT LoRA/QLoRA · LLM fine-tuning · baseline-vs-adapter evaluation · run lineage (reproducibility / audit spine) · CI smoke test · engineering annotation → JSON task
-
 A small LoRA / QLoRA fine-tuning recipe that I can run, measure and reproduce, rather than a notebook that worked once — the training half of an MLOps train→eval→record loop.
 
 The whole loop is one command: evaluate the base model, train a LoRA adapter, evaluate the adapter on the **same** held-out set, and write a report next to a run record (git sha, config hash, train and test data hashes, library versions, loss curve). The CPU smoke test runs the full loop in a few seconds, so it can sit in CI.
