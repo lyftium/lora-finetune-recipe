@@ -1,0 +1,33 @@
+{
+  "baseline": null,
+  "lora": {
+    "n": 16,
+    "json_valid": 0.0,
+    "exact_match": 0.0,
+    "exact_match_by_kind": {
+      "bom_row": 0.0,
+      "dimension": 0.0,
+      "fcf": 0.0
+    }
+  },
+  "run": {
+    "git_sha": "9a55eed60fdf",
+    "config_hash": "bdb5d33ed608",
+    "data_hash": "661c3857dd6f8c22",
+    "test_data_hash": "ccb72f1557eb6db5",
+    "params": {
+      "total": 1033296,
+      "trainable": 1024,
+      "fraction": 0.000991
+    },
+    "steps": 20,
+    "seconds": 2.1,
+    "loss_first": 10.3817,
+    "loss_last": 10.312,
+    "libs": {
+      "torch": "2.5.1",
+      "transformers": "4.46.3",
+      "peft": "0.13.2"
+    }
+  }
+}
