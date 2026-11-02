@@ -12,7 +12,18 @@ pytest                                              # 12 tests, CPU, a few secon
 lora-recipe run --config configs/tiny-cpu.yaml      # end-to-end smoke run
 lora-recipe run --config configs/qwen-0.5b-lora.yaml  # a real small model, CPU or GPU
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --adapter outputs/qwen-0.5b-lora/adapter
+torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yaml --distributed --skip-baseline
 ```
+
+## At a glance
+
+| Area | In this repo |
+|:--|:--|
+| Training | PyTorch, Hugging Face, PEFT (LoRA / QLoRA) |
+| Eval | Baseline vs adapter on the same held-out set |
+| Lineage | git sha, config hash, data hashes, library versions |
+| Distributed | torchrun DDP (CPU gloo proven; CUDA nccl) |
+| Smoke | Full CPU loop for CI in a few seconds |
 
 ## The task
 
@@ -37,11 +48,12 @@ Two scores, because they fail differently:
 |---|---|
 | `src/lora_recipe/data.py` | synthetic task, leak-free splits |
 | `src/lora_recipe/model.py` | base model + LoRA (PEFT); QLoRA with a 4-bit NF4 base via bitsandbytes |
-| `src/lora_recipe/train.py` | a plain training loop, loss on answer tokens only (prompt masked) |
+| `src/lora_recipe/train.py` | a plain training loop, loss on answer tokens only (prompt masked); optional DDP |
 | `src/lora_recipe/evaluate.py` | greedy decoding, json_valid / exact_match |
 | `src/lora_recipe/lineage.py` | run record: git sha, hashes, versions |
-| `configs/` | `tiny-cpu` (smoke test), `qwen-0.5b-lora` (CPU-able), `qlora-7b-gpu` (needs CUDA) |
-| `tests/` | leak-free splits, only adapters trainable, base weights unchanged, loss goes down, adapter save/reload, run record, QLoRA refused on CPU |
+| `configs/` | `tiny-cpu` (smoke), `tiny-ddp` (multi-process), `qwen-0.5b-lora`, `qlora-7b-gpu` |
+| `results/tiny-ddp/` | measured 2-process DDP run record |
+| `tests/` | leak-free splits, adapters-only trainable, DDP env helpers, QLoRA refused on CPU |
 
 The plain loop is on purpose: it keeps every step visible (masking, padding side, what gets saved). For a bigger job I'd move to the HF `Trainer` or TRL, not rewrite this.
 
@@ -73,15 +85,18 @@ How to read it, honestly:
 - The 3 remaining errors are all feature control frames. This is synthetic data on one seed, not a claim about real drawings.
 - The adapter was trained before the first commit, so `train_run.json` has `git_sha: unknown`. Both eval reports were produced from commit `26853b1` with the same config hash (`96afd7dff9cf`).
 
+## Distributed training
+
+See [`docs/distributed-training.md`](docs/distributed-training.md) and [`results/tiny-ddp/`](results/tiny-ddp/). Cluster submit YAML lives next door in drawing-review-service `deploy/openshift/pytorchjob-ddp.yaml`.
+
 ## Not done yet
 
-- A prompted baseline (schema + few-shot examples in the prompt) on the same split, which is the comparison that actually decides whether fine-tuning is worth it here.
-- **Distributed training (DDP):** implemented and exercised with `torchrun --nproc_per_node=2` (CPU **gloo**; CUDA uses **nccl**). See `docs/distributed-training.md` and `results/tiny-ddp/`. Cluster submit: companion `PyTorchJob` on OpenShift AI / Training Operator.
+- A prompted baseline (schema + few-shot) on the same split.
 - Running the QLoRA 7B config on a GPU and adding its report.
-- Serving the adapter with vLLM's LoRA support and checking the served outputs against the offline eval.
+- Serving the adapter with vLLM LoRA support and checking served outputs against offline eval.
 
 ## CI
 
-The workflow is in `ci/github-actions-ci.yml` (lint + tests on CPU). To enable it, move it to `.github/workflows/ci.yml`.
+The workflow is in `ci/github-actions-ci.yml` (lint + tests on CPU). To enable it, move it to `.github/workflows/ci.yml` (needs GitHub `workflow` scope).
 
 MIT licence.
