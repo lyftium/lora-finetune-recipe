@@ -1,0 +1,12 @@
+# Multi-process DDP smoke (CPU gloo or CUDA nccl). Launch with:
+#   torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yaml --distributed --skip-baseline
+base_model: hf-internal-testing/tiny-random-LlamaForCausalLM
+qlora: false
+lora: { r: 8, alpha: 16, dropout: 0.0, target_modules: [q_proj, v_proj] }
+n_train: 64
+n_test: 16
+lr: 5.0e-3
+batch_size: 4
+max_steps: 20
+max_new_tokens: 32
+output_dir: outputs/tiny-ddp
