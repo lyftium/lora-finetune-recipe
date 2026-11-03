@@ -8,7 +8,7 @@ The whole loop is one command: evaluate the base model, train a LoRA adapter, ev
 python -m venv .venv && . .venv/bin/activate
 pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 pip install -r requirements.lock -r requirements-dev.txt && pip install --no-deps -e .
-pytest                                              # 12 tests, CPU, a few seconds
+pytest                                              # 14 tests, CPU, a few seconds
 lora-recipe run --config configs/tiny-cpu.yaml      # end-to-end smoke run
 lora-recipe run --config configs/qwen-0.5b-lora.yaml  # a real small model, CPU or GPU
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --adapter outputs/qwen-0.5b-lora/adapter

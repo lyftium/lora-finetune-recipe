@@ -58,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
             k: res["record"][k]
             for k in (
                 "git_sha",
+                "git_dirty",
                 "config_hash",
                 "data_hash",
                 "test_data_hash",
@@ -77,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _eval_only(cfg: RunConfig, adapter: Path | None, out: Path | None) -> int:
     from .data import data_hash, make_splits
-    from .lineage import git_sha
+    from .lineage import git_dirty, git_sha
 
     _, test_rows = make_splits(cfg.n_train, cfg.n_test, cfg.seed)
     model = load_base(cfg)
@@ -89,6 +90,7 @@ def _eval_only(cfg: RunConfig, adapter: Path | None, out: Path | None) -> int:
         "model": cfg.base_model,
         "adapter": str(adapter) if adapter else None,
         "git_sha": git_sha(),
+        "git_dirty": git_dirty(),
         "config_hash": cfg.fingerprint(),
         "test_data_hash": data_hash(test_rows),
         "scores": evaluate(model, load_tokenizer(cfg), test_rows, cfg.max_new_tokens),

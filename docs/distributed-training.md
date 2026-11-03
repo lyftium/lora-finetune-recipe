@@ -4,7 +4,7 @@
 
 | Mode | How | Backend | Evidence |
 |---|---|---|---|
-| Single process | `lora-recipe run --config configs/tiny-cpu.yaml` | n/a | CI + `results/` |
+| Single process | `lora-recipe run --config configs/tiny-cpu.yaml` | n/a | `tests/test_smoke.py` + `results/` |
 | Multi-process DDP | `torchrun --nproc_per_node=2 ... --distributed` | **gloo** on CPU, **nccl** on CUDA | `results/tiny-ddp/` + this doc |
 | Cluster job | `PyTorchJob` in drawing-review-service OpenShift overlay | Training Operator | YAML for OpenShift AI-style clusters |
 
@@ -23,6 +23,12 @@ CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 -m lora_recipe.cli run \
 ```
 
 `train_run.json` records `distributed.world_size`, `backend`, and `device` so a cluster run is auditable the same way as a laptop run.
+
+What `results/tiny-ddp/` does and does not show:
+
+- It proves the mechanics: two ranks, process group, gradient all-reduce, rank-0 save. The base model is a random tiny Llama, so loss barely moves and exact match is 0 by design.
+- Its `git_sha` (`9a55eed`) predates the commit that added the DDP code: the run was made from an uncommitted working tree. Run records now carry `git_dirty` so this is visible in the record itself; the next DDP run will replace this one.
+- Its `data_hash` is computed on rank 0's shard, not the full training set.
 
 ## Cluster (OpenShift AI / Kubeflow)
 
