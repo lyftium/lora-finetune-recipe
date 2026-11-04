@@ -131,9 +131,7 @@ def _eval_only(
         model = PeftModel.from_pretrained(model, adapter)
     tok = load_tokenizer(cfg)
     modes = ("unprompted", "schema", "fewshot") if all_prompt_modes else (prompt_mode,)
-    by_mode = {
-        m: evaluate(model, tok, test_rows, cfg.max_new_tokens, prompt_mode=m) for m in modes
-    }
+    by_mode = {m: evaluate(model, tok, test_rows, cfg.max_new_tokens, prompt_mode=m) for m in modes}
     report: dict = {
         "model": cfg.base_model,
         "adapter": str(adapter) if adapter else None,

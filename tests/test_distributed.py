@@ -8,6 +8,7 @@ def test_dist_info_defaults_to_single_process(monkeypatch):
     rank, world, local, use = _dist_info(False)
     assert (rank, world, local, use) == (0, 1, 0, False)
 
+
 def test_dist_info_reads_env(monkeypatch):
     monkeypatch.setenv("WORLD_SIZE", "2")
     monkeypatch.setenv("RANK", "1")
