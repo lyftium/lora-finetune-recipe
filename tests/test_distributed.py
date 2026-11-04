@@ -1,5 +1,6 @@
 from lora_recipe.train import _dist_info
 
+
 def test_dist_info_defaults_to_single_process(monkeypatch):
     monkeypatch.delenv("WORLD_SIZE", raising=False)
     monkeypatch.delenv("RANK", raising=False)
