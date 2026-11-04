@@ -36,6 +36,8 @@ torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yam
 | Eval | Baseline vs adapter on the same held-out set |
 | Lineage | git sha, config hash, data hashes, library versions |
 | Resume | `checkpoint.pt` (weights + optimizer + RNG); `--resume-from` |
+| DDP math lab | `labs/ddp-token-weighting/` — CPU NumPy token-weighted loss (**not** NCCL) |
+| SFT mask audit | `tools/inspect_sft_batch.py` + `tests/test_sft_mask.py` |
 | Distributed | torchrun DDP (CPU gloo proven; CUDA nccl wired) |
 | Smoke | Full CPU loop for CI in a few seconds |
 

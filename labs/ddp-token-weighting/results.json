@@ -1,0 +1,8 @@
+{
+  "seed": 0,
+  "n_trials": 100,
+  "mean_abs_err_token_weighted": 5.662137425588298e-17,
+  "mean_abs_err_naive_mean_of_means": 0.5906890490696586,
+  "max_abs_err_token_weighted": 3.3306690738754696e-16,
+  "limits": "CPU NumPy simulation only \u2014 not NCCL / multi-GPU training proof"
+}
