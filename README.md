@@ -9,7 +9,9 @@ a report next to a run record (git sha, config hash, data hashes, library versio
 | | |
 |:--|:--|
 | **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter's contribution is unclear. |
-| **Verify** | `pytest` (14 CPU tests) · `lora-recipe run --config configs/tiny-cpu.yaml` · results in `results/qwen-0.5b-lora/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
+| **Verify** | `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe run --config configs/tiny-cpu.yaml` · results in `results/qwen-0.5b-lora/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
+| **Resume / lineage** | `checkpoint.pt` + `--resume-from` — [docs/resume.md](docs/resume.md); run record keeps git sha, config/data hashes, `resumed` |
+| **CI-ready** | Manifest in [`ci/github-actions-ci.yml`](ci/github-actions-ci.yml); enable with `bash scripts/install-github-actions.sh` once `workflow` scope is granted |
 | **Status & limits** | Reported baseline is **unprompted** (schema never shown). A prompted / few-shot baseline is **not done**. `tiny-ddp` proves **two-process DDP mechanics** on a tiny model — **not** a multi-GPU training result. QLoRA 7B config written, not run here. CI written, not enabled. |
 | **Next** | Prompted baseline on the same split; real multi-GPU DDP with the same lineage record. |
 
@@ -31,6 +33,7 @@ torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yam
 | Training | PyTorch, Hugging Face, PEFT (LoRA / QLoRA) |
 | Eval | Baseline vs adapter on the same held-out set |
 | Lineage | git sha, config hash, data hashes, library versions |
+| Resume | `checkpoint.pt` (weights + optimizer + RNG); `--resume-from` |
 | Distributed | torchrun DDP (CPU gloo proven; CUDA nccl wired) |
 | Smoke | Full CPU loop for CI in a few seconds |
 

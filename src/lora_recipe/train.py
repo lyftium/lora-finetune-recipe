@@ -78,7 +78,7 @@ def _device(local: int) -> torch.device:
     return torch.device("cpu")
 
 
-def train(cfg: RunConfig, out_dir: Path | None = None, distributed: bool = False) -> dict:
+def train(cfg: RunConfig, out_dir: Path | None = None, distributed: bool = False, resume_from: Path | None = None, max_steps: int | None = None) -> dict:
     rank, world, local, use_dist = _dist_info(distributed)
     backend = None
     if use_dist:
@@ -92,6 +92,9 @@ def train(cfg: RunConfig, out_dir: Path | None = None, distributed: bool = False
     random.seed(cfg.seed + rank)
     out_dir = Path(out_dir or cfg.output_dir)
     device = _device(local)
+    steps_target = int(max_steps if max_steps is not None else cfg.max_steps)
+    ckpt_path = out_dir / "checkpoint.pt"
+
 
     tok = load_tokenizer(cfg)
     raw = add_lora(load_base(cfg), cfg)
@@ -109,25 +112,64 @@ def train(cfg: RunConfig, out_dir: Path | None = None, distributed: bool = False
     model.train()
     losses, step, t0 = [], 0, time.perf_counter()
     rng = random.Random(cfg.seed + rank)
-    while step < cfg.max_steps:
-        rng.shuffle(data)
-        for i in range(0, len(data), cfg.batch_size):
-            batch = collate(data[i : i + cfg.batch_size], tok.pad_token_id)
-            batch = {k: v.to(device) for k, v in batch.items()}
-            loss = model(**batch).loss
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            opt.step()
-            opt.zero_grad()
-            losses.append(round(float(loss.detach().item()), 4))
-            step += 1
-            if step >= cfg.max_steps:
-                break
+    # Epoch cursor so resume continues mid-epoch (not a fresh shuffle).
+    order = list(range(len(data)))
+    cursor = 0
+    resumed = False
+    if resume_from is not None:
+        ckpt = torch.load(Path(resume_from), map_location=device, weights_only=False)
+        core0 = model.module if use_dist else model
+        core0.load_state_dict(ckpt["model"])
+        opt.load_state_dict(ckpt["optimizer"])
+        step = int(ckpt["step"])
+        losses = list(ckpt.get("losses", []))
+        if "torch_rng" in ckpt:
+            torch.set_rng_state(ckpt["torch_rng"])
+        if "py_rng" in ckpt:
+            rng.setstate(ckpt["py_rng"])
+        if "order" in ckpt and "cursor" in ckpt:
+            order = list(ckpt["order"])
+            cursor = int(ckpt["cursor"])
+        resumed = True
+    while step < steps_target:
+        if cursor >= len(order):
+            order = list(range(len(data)))
+            rng.shuffle(order)
+            cursor = 0
+        if step == 0 and cursor == 0 and not resumed:
+            rng.shuffle(order)
+        end = min(cursor + cfg.batch_size, len(order))
+        batch_rows = [data[j] for j in order[cursor:end]]
+        cursor = end
+        batch = collate(batch_rows, tok.pad_token_id)
+        batch = {k: v.to(device) for k, v in batch.items()}
+        loss = model(**batch).loss
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        opt.step()
+        opt.zero_grad()
+        losses.append(round(float(loss.detach().item()), 4))
+        step += 1
 
     core = model.module if use_dist else model
     record = None
     if rank == 0:
         out_dir.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "step": step,
+                "model": core.state_dict(),
+                "optimizer": opt.state_dict(),
+                "losses": losses,
+                "order": order,
+                "cursor": cursor,
+                "torch_rng": torch.get_rng_state(),
+                "py_rng": rng.getstate(),
+                "config_hash": cfg.fingerprint(),
+                "data_hash": data_hash(train_rows),
+            },
+            ckpt_path,
+        )
         core.save_pretrained(out_dir / "adapter")
         record = run_record(
             "train",
@@ -141,6 +183,9 @@ def train(cfg: RunConfig, out_dir: Path | None = None, distributed: bool = False
                 "loss_last": losses[-1],
                 "losses": losses,
                 "test_data_hash": data_hash(test_rows),
+                "resumed": resumed,
+                "resume_from": str(resume_from) if resume_from else None,
+                "checkpoint": str(ckpt_path),
                 "distributed": {
                     "enabled": use_dist,
                     "world_size": world,

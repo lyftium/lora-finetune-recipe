@@ -22,11 +22,24 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--config", type=Path, required=True)
+    r.add_argument("--out", type=Path, default=None, help="override config output_dir")
     r.add_argument("--skip-baseline", action="store_true")
     r.add_argument(
         "--distributed",
         action="store_true",
         help="use DDP (launch with torchrun; WORLD_SIZE>=2)",
+    )
+    r.add_argument(
+        "--resume-from",
+        type=Path,
+        default=None,
+        help="path to checkpoint.pt from a prior run",
+    )
+    r.add_argument(
+        "--max-steps",
+        type=int,
+        default=None,
+        help="override config max_steps (useful for resume demos)",
     )
     e = sub.add_parser("eval", help="score the base model, or base + a saved adapter")
     e.add_argument("--config", type=Path, required=True)
@@ -37,7 +50,8 @@ def main(argv: list[str] | None = None) -> int:
     cfg = RunConfig.load(args.config)
     if args.cmd == "eval":
         return _eval_only(cfg, args.adapter, args.out)
-    out = Path(cfg.output_dir)
+    out = Path(args.out) if getattr(args, "out", None) else Path(cfg.output_dir)
+    cfg.output_dir = str(out)
     baseline = None
     if not args.skip_baseline:
         from .data import make_splits
@@ -47,7 +61,13 @@ def main(argv: list[str] | None = None) -> int:
         baseline = evaluate(base, load_tokenizer(cfg), test_rows, cfg.max_new_tokens)
         del base  # free the first copy before training loads its own
         gc.collect()
-    res = train(cfg, out, distributed=args.distributed)
+    res = train(
+        cfg,
+        out,
+        distributed=args.distributed,
+        resume_from=args.resume_from,
+        max_steps=args.max_steps,
+    )
     if res.get("rank", 0) != 0:
         return 0  # only rank 0 evaluates and writes the report
     tuned = evaluate(res["model"], res["tokenizer"], res["test_rows"], cfg.max_new_tokens)
