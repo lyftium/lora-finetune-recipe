@@ -78,7 +78,13 @@ def _device(local: int) -> torch.device:
     return torch.device("cpu")
 
 
-def train(cfg: RunConfig, out_dir: Path | None = None, distributed: bool = False, resume_from: Path | None = None, max_steps: int | None = None) -> dict:
+def train(
+    cfg: RunConfig,
+    out_dir: Path | None = None,
+    distributed: bool = False,
+    resume_from: Path | None = None,
+    max_steps: int | None = None,
+) -> dict:
     rank, world, local, use_dist = _dist_info(distributed)
     backend = None
     if use_dist:
