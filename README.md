@@ -1,8 +1,17 @@
-# lora-finetune-recipe
+# LoRA Fine-Tune Recipe
+### Adapt a model, measure the baseline first, keep a lineage record
 
-A small LoRA / QLoRA fine-tuning recipe that I can run, measure and reproduce, rather than a notebook that worked once — the training half of an MLOps train→eval→record loop.
+A small, reproducible LoRA / QLoRA recipe — the train → eval → record half of an
+MLOps loop — rather than a notebook that worked once. One command evaluates the
+base model, trains an adapter, evaluates on the **same** held-out set, and writes
+a report next to a run record (git sha, config hash, data hashes, library versions).
 
-The whole loop is one command: evaluate the base model, train a LoRA adapter, evaluate the adapter on the **same** held-out set, and write a report next to a run record (git sha, config hash, train and test data hashes, library versions, loss curve). The CPU smoke test runs the full loop in a few seconds, so it can sit in CI.
+| | |
+|:--|:--|
+| **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter's contribution is unclear. |
+| **Verify** | `pytest` (14 CPU tests) · `lora-recipe run --config configs/tiny-cpu.yaml` · results in `results/qwen-0.5b-lora/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
+| **Status & limits** | Reported baseline is **unprompted** (schema never shown). A prompted / few-shot baseline is **not done**. `tiny-ddp` proves **two-process DDP mechanics** on a tiny model — **not** a multi-GPU training result. QLoRA 7B config written, not run here. CI written, not enabled. |
+| **Next** | Prompted baseline on the same split; real multi-GPU DDP with the same lineage record. |
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
@@ -22,7 +31,7 @@ torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yam
 | Training | PyTorch, Hugging Face, PEFT (LoRA / QLoRA) |
 | Eval | Baseline vs adapter on the same held-out set |
 | Lineage | git sha, config hash, data hashes, library versions |
-| Distributed | torchrun DDP (CPU gloo proven; CUDA nccl) |
+| Distributed | torchrun DDP (CPU gloo proven; CUDA nccl wired) |
 | Smoke | Full CPU loop for CI in a few seconds |
 
 ## The task
