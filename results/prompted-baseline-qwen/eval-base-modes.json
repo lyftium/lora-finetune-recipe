@@ -1,0 +1,48 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adapter": null,
+  "git_sha": "8a5ea34bb350",
+  "git_dirty": true,
+  "config_hash": "96afd7dff9cf",
+  "test_data_hash": "b89f85e0adae4406",
+  "prompt_modes": [
+    "unprompted",
+    "schema",
+    "fewshot"
+  ],
+  "scores_by_mode": {
+    "unprompted": {
+      "n": 100,
+      "prompt_mode": "unprompted",
+      "json_valid": 0.66,
+      "exact_match": 0.0,
+      "exact_match_by_kind": {
+        "bom_row": 0.0,
+        "dimension": 0.0,
+        "fcf": 0.0
+      }
+    },
+    "schema": {
+      "n": 100,
+      "prompt_mode": "schema",
+      "json_valid": 0.78,
+      "exact_match": 0.03,
+      "exact_match_by_kind": {
+        "bom_row": 0.0,
+        "dimension": 0.0,
+        "fcf": 0.1
+      }
+    },
+    "fewshot": {
+      "n": 100,
+      "prompt_mode": "fewshot",
+      "json_valid": 1.0,
+      "exact_match": 0.8,
+      "exact_match_by_kind": {
+        "bom_row": 1.0,
+        "dimension": 1.0,
+        "fcf": 0.3333
+      }
+    }
+  }
+}

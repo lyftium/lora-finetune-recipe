@@ -11,7 +11,7 @@ a report next to a run record (git sha, config hash, data hashes, library versio
 | **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter's contribution is unclear. |
 | **Verify** | `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes` · results in `results/qwen-0.5b-lora/` + `results/prompted-baseline-qwen/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
 | **Resume / lineage** | `checkpoint.pt` + `--resume-from` — [docs/resume.md](docs/resume.md); run record keeps git sha, config/data hashes, `resumed` |
-| **Prompted baseline** | Same held-out split; modes `unprompted` / `schema` / `fewshot` — [docs/prompted-baseline.md](docs/prompted-baseline.md) |
+| **Prompted baseline** | Same `test_data_hash`; Qwen base exact_match unprompted **0.0** → fewshot **0.8** ([artefact](results/prompted-baseline-qwen/eval-base-modes.json), [docs](docs/prompted-baseline.md)) |
 | **CI-ready** | Manifest in [`ci/github-actions-ci.yml`](ci/github-actions-ci.yml); enable with `bash scripts/install-github-actions.sh` once `workflow` scope is granted |
 | **Status & limits** | Published LoRA report still quotes the **unprompted** base. Prompted modes measured on the same `test_data_hash` under `results/prompted-baseline-*`. `tiny-ddp` proves **two-process DDP mechanics** — **not** multi-GPU quality. QLoRA 7B config written, not run here. CI written, not enabled. |
 | **Next** | Real multi-GPU DDP with the same lineage record; prompted vs adapter on GPU. |
