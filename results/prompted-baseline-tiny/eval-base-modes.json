@@ -1,0 +1,48 @@
+{
+  "model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+  "adapter": null,
+  "git_sha": "8a5ea34bb350",
+  "git_dirty": true,
+  "config_hash": "0cee73c178bb",
+  "test_data_hash": "ccb72f1557eb6db5",
+  "prompt_modes": [
+    "unprompted",
+    "schema",
+    "fewshot"
+  ],
+  "scores_by_mode": {
+    "unprompted": {
+      "n": 16,
+      "prompt_mode": "unprompted",
+      "json_valid": 0.0,
+      "exact_match": 0.0,
+      "exact_match_by_kind": {
+        "bom_row": 0.0,
+        "dimension": 0.0,
+        "fcf": 0.0
+      }
+    },
+    "schema": {
+      "n": 16,
+      "prompt_mode": "schema",
+      "json_valid": 0.0,
+      "exact_match": 0.0,
+      "exact_match_by_kind": {
+        "bom_row": 0.0,
+        "dimension": 0.0,
+        "fcf": 0.0
+      }
+    },
+    "fewshot": {
+      "n": 16,
+      "prompt_mode": "fewshot",
+      "json_valid": 0.0,
+      "exact_match": 0.0,
+      "exact_match_by_kind": {
+        "bom_row": 0.0,
+        "dimension": 0.0,
+        "fcf": 0.0
+      }
+    }
+  }
+}

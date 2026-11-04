@@ -72,6 +72,18 @@ def test_run_record_has_lineage(cfg, trained):
 def test_evaluate_runs(trained):
     rep = evaluate(trained["model"], trained["tokenizer"], trained["test_rows"][:4], 8)
     assert rep["n"] == 4 and 0 <= rep["exact_match"] <= rep["json_valid"] <= 1
+    assert rep["prompt_mode"] == "unprompted"
+
+
+def test_evaluate_schema_mode_runs(trained):
+    rep = evaluate(
+        trained["model"],
+        trained["tokenizer"],
+        trained["test_rows"][:4],
+        8,
+        prompt_mode="schema",
+    )
+    assert rep["prompt_mode"] == "schema" and rep["n"] == 4
 
 
 def test_json_extraction():

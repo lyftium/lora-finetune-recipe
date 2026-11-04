@@ -45,11 +45,28 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--config", type=Path, required=True)
     e.add_argument("--adapter", type=Path, help="adapter directory saved by `run`")
     e.add_argument("--out", type=Path, help="where to write the JSON report")
+    e.add_argument(
+        "--prompt-mode",
+        choices=("unprompted", "schema", "fewshot"),
+        default="unprompted",
+        help="eval instruction: unprompted (default), schema, or fewshot",
+    )
+    e.add_argument(
+        "--all-prompt-modes",
+        action="store_true",
+        help="run unprompted + schema + fewshot on the same held-out set and write a comparison",
+    )
     args = ap.parse_args(argv)
 
     cfg = RunConfig.load(args.config)
     if args.cmd == "eval":
-        return _eval_only(cfg, args.adapter, args.out)
+        return _eval_only(
+            cfg,
+            args.adapter,
+            args.out,
+            prompt_mode=args.prompt_mode,
+            all_prompt_modes=args.all_prompt_modes,
+        )
     out = Path(args.out) if getattr(args, "out", None) else Path(cfg.output_dir)
     cfg.output_dir = str(out)
     baseline = None
@@ -96,7 +113,13 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _eval_only(cfg: RunConfig, adapter: Path | None, out: Path | None) -> int:
+def _eval_only(
+    cfg: RunConfig,
+    adapter: Path | None,
+    out: Path | None,
+    prompt_mode: str = "unprompted",
+    all_prompt_modes: bool = False,
+) -> int:
     from .data import data_hash, make_splits
     from .lineage import git_dirty, git_sha
 
@@ -106,15 +129,24 @@ def _eval_only(cfg: RunConfig, adapter: Path | None, out: Path | None) -> int:
         from peft import PeftModel
 
         model = PeftModel.from_pretrained(model, adapter)
-    report = {
+    tok = load_tokenizer(cfg)
+    modes = ("unprompted", "schema", "fewshot") if all_prompt_modes else (prompt_mode,)
+    by_mode = {
+        m: evaluate(model, tok, test_rows, cfg.max_new_tokens, prompt_mode=m) for m in modes
+    }
+    report: dict = {
         "model": cfg.base_model,
         "adapter": str(adapter) if adapter else None,
         "git_sha": git_sha(),
         "git_dirty": git_dirty(),
         "config_hash": cfg.fingerprint(),
         "test_data_hash": data_hash(test_rows),
-        "scores": evaluate(model, load_tokenizer(cfg), test_rows, cfg.max_new_tokens),
+        "prompt_modes": list(modes),
     }
+    if len(modes) == 1:
+        report["scores"] = by_mode[modes[0]]
+    else:
+        report["scores_by_mode"] = by_mode
     text = json.dumps(report, indent=2)
     if out is not None:
         out.parent.mkdir(parents=True, exist_ok=True)

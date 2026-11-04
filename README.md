@@ -9,20 +9,22 @@ a report next to a run record (git sha, config hash, data hashes, library versio
 | | |
 |:--|:--|
 | **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter's contribution is unclear. |
-| **Verify** | `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe run --config configs/tiny-cpu.yaml` · results in `results/qwen-0.5b-lora/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
+| **Verify** | `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes` · results in `results/qwen-0.5b-lora/` + `results/prompted-baseline-qwen/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
 | **Resume / lineage** | `checkpoint.pt` + `--resume-from` — [docs/resume.md](docs/resume.md); run record keeps git sha, config/data hashes, `resumed` |
+| **Prompted baseline** | Same held-out split; modes `unprompted` / `schema` / `fewshot` — [docs/prompted-baseline.md](docs/prompted-baseline.md) |
 | **CI-ready** | Manifest in [`ci/github-actions-ci.yml`](ci/github-actions-ci.yml); enable with `bash scripts/install-github-actions.sh` once `workflow` scope is granted |
-| **Status & limits** | Reported baseline is **unprompted** (schema never shown). A prompted / few-shot baseline is **not done**. `tiny-ddp` proves **two-process DDP mechanics** on a tiny model — **not** a multi-GPU training result. QLoRA 7B config written, not run here. CI written, not enabled. |
-| **Next** | Prompted baseline on the same split; real multi-GPU DDP with the same lineage record. |
+| **Status & limits** | Published LoRA report still quotes the **unprompted** base. Prompted modes measured on the same `test_data_hash` under `results/prompted-baseline-*`. `tiny-ddp` proves **two-process DDP mechanics** — **not** multi-GPU quality. QLoRA 7B config written, not run here. CI written, not enabled. |
+| **Next** | Real multi-GPU DDP with the same lineage record; prompted vs adapter on GPU. |
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 pip install -r requirements.lock -r requirements-dev.txt && pip install --no-deps -e .
-pytest                                              # 14 tests, CPU, a few seconds
+pytest                                              # 16 tests, CPU (incl. resume)
 lora-recipe run --config configs/tiny-cpu.yaml      # end-to-end smoke run
 lora-recipe run --config configs/qwen-0.5b-lora.yaml  # a real small model, CPU or GPU
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --adapter outputs/qwen-0.5b-lora/adapter
+lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes --out results/prompted-baseline-qwen/eval-base-modes.json
 torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yaml --distributed --skip-baseline
 ```
 
