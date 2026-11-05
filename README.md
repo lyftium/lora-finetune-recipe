@@ -30,6 +30,10 @@ lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes --out r
 torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yaml --distributed --skip-baseline
 ```
 
+## Data scientist signals
+
+Same-split **baselines before claiming an adapter helped**; prompted modes on a fixed `test_data_hash` (unprompted exact_match 0.0 → fewshot 0.8); lineage next to scores. Do not quote digits beyond `results/`.
+
 ## Integrator signals
 
 Fine-tuning as an **integration** artefact: baseline on the same split, lineage next to the report, resumable checkpoints, SFT mask audit, model-ingest policy (no casual `trust_remote_code` — [`docs/model-ingest.md`](docs/model-ingest.md)), and a CPU lab that shows why **mean-of-means ≠ token-weighted loss** under uneven valid-token counts ([`labs/ddp-token-weighting/`](labs/ddp-token-weighting/)) — without claiming multi-node NCCL experience.
