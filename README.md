@@ -32,7 +32,7 @@ torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yam
 
 ## Integrator signals
 
-Fine-tuning as an **integration** artefact: baseline on the same split, lineage next to the report, resumable checkpoints, SFT mask audit, and a CPU lab that shows why **mean-of-means ≠ token-weighted loss** under uneven valid-token counts ([`labs/ddp-token-weighting/`](labs/ddp-token-weighting/)) — without claiming multi-node NCCL experience.
+Fine-tuning as an **integration** artefact: baseline on the same split, lineage next to the report, resumable checkpoints, SFT mask audit, model-ingest policy (no casual `trust_remote_code` — [`docs/model-ingest.md`](docs/model-ingest.md)), and a CPU lab that shows why **mean-of-means ≠ token-weighted loss** under uneven valid-token counts ([`labs/ddp-token-weighting/`](labs/ddp-token-weighting/)) — without claiming multi-node NCCL experience.
 
 ## At a glance
 
