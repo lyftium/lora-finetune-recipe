@@ -11,7 +11,7 @@ a report next to a run record (git sha, config hash, data hashes, library versio
 | | |
 |:--|:--|
 | **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter's contribution is unclear. |
-| **Verify** | `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes` · results in `results/qwen-0.5b-lora/` + `results/prompted-baseline-qwen/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
+| **Verify** | [`docs/DEMO.md`](docs/DEMO.md) · `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes` · results in `results/qwen-0.5b-lora/` + `results/prompted-baseline-qwen/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
 | **Resume / lineage** | `checkpoint.pt` + `--resume-from` — [docs/resume.md](docs/resume.md); run record keeps git sha, config/data hashes, `resumed` |
 | **Prompted baseline** | Same `test_data_hash`; Qwen base exact_match unprompted **0.0** → fewshot **0.8** ([artefact](results/prompted-baseline-qwen/eval-base-modes.json), [docs](docs/prompted-baseline.md)) |
 | **CI** | ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
