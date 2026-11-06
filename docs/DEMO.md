@@ -5,9 +5,9 @@ Walkthrough for a screener. Stick to artefacts in this repo.
 ## 90 seconds
 
 1. **Question:** did the adapter help, or only the prompt?
-2. Open the README “Start here” block and the results table.
+2. Open the README **Fair glance** table first (fewshot exact_match 0.8) — then the adapter table (still vs unprompted base).
 3. Point at `results/prompted-baseline-qwen/`, `results/qwen-0.5b-lora/`, `labs/ddp-token-weighting/`.
-4. **Limits out loud:** CPU / small models here; QLoRA 7B written not run; `tiny-ddp` is mechanics, not multi-GPU quality.
+4. **Limits out loud:** do not quote 0.00→0.97 as fine-tuning alone; CPU / small models; `tiny-ddp` is mechanics, not multi-GPU quality.
 
 ## 10 minutes
 
