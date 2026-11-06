@@ -1,14 +1,14 @@
-# LoRA fine-tune recipe
+# LoRA Fine-Tune Recipe — baseline first, lineage kept
 
 ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg)
 
-A small recipe that refuses to skip the baseline.
+| | |
+|---|---|
+| **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter’s contribution is unclear. |
+| **Verify** | [`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes in [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json) |
+| **Status** | One CLI: score base → train LoRA / QLoRA → score again on the **same** held-out set → report next to git / config / data hashes. Few-shot prompting alone reaches exact_match **0.8** on that hash — so an adapter vs an unprompted base is not the fair story. |
 
-One CLI: score the base on a held-out set, train a LoRA / QLoRA adapter, score again on the **same** split, write a report next to git / config / data hashes. The awkward finding is in the first results table — few-shot prompting alone gets exact_match to **0.8** on that hash, so an adapter compared only to an unprompted base looks more heroic than it is.
-
-[`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json)
-
-PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes learning the mechanics, not multi-GPU quality. QLoRA 7B config is written; I have not run it here. GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
+PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes (mechanics, not multi-GPU quality). QLoRA 7B config is written; not run here. GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
 [Task](#the-task) · [Results](#results) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
 
