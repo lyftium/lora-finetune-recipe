@@ -8,4 +8,4 @@ Rules for loading base models in this recipe. Prefer failure over silent risk.
 4. **QLoRA refuses CPU** — clear error instead of silent fallback (`QLoraUnavailable`).
 5. **Lineage** — every `train_run.json` records git sha, config hash, data hashes, library versions.
 
-Interview note: employer air-gap policies may additionally require mirrored registries and signed artefacts; this repo demonstrates the engineering habits, not a certified supply chain.
+Deployment note: an air-gapped environment may additionally require mirrored registries and signed artefacts; this repo demonstrates dependency controls, not a certified supply chain.
