@@ -21,7 +21,7 @@ lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes \
 
 | Minute | Show | Say |
 |---|---|---|
-| 0–2 | Problem + Start here | Same-split baseline before claiming the adapter |
+| 0–2 | Problem + Fair glance | Same-split baseline before claiming the adapter |
 | 2–4 | `pytest` + resume script | Lineage and resumable checkpoints are part of the artefact |
 | 4–6 | Prompted baseline JSON | Unprompted exact_match 0.0 → fewshot 0.8; same `test_data_hash` |
 | 6–8 | LoRA report vs base | Published table still quotes unprompted base — say that |
