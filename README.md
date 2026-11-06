@@ -8,7 +8,7 @@ On this synthetic annotation task (100 held-out examples, one data hash), few-sh
 
 PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes, to see how the loop behaves — not a multi-GPU quality run. The QLoRA 7B config is written; I have not run it. Walkthrough: [`docs/DEMO.md`](docs/DEMO.md). GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
-[Task](#the-task) · [Results](#results) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
+[Task](#the-task) · [Results](#results) · [Benchmark reports](BENCHMARK.md) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
 
 ## The task
 
@@ -25,6 +25,8 @@ Train and test come from different seeds and are de-duplicated. Scores: **json_v
 If the gap is missing knowledge, start with retrieval. Fine-tuning fits format / style / narrow behaviour that prompting can’t hold — once an evaluation set can prove it helped.
 
 ## Results
+
+See [BENCHMARK.md](BENCHMARK.md) for this CPU evaluation plus the separate prompt-matched Kaggle T4 comparison, where both few-shot prompting and LoRA reached 1.00 exact match on 150 held-out examples.
 
 Same 100 held-out examples (`test_data_hash` `b89f85e0adae4406`), greedy decoding, 48 new tokens max.
 

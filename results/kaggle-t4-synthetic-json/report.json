@@ -1,0 +1,51 @@
+{
+  "config": {
+    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "r": 16,
+    "alpha": 32,
+    "dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "n_train": 400,
+    "n_test": 150,
+    "lr": 0.0002,
+    "batch_size": 8,
+    "max_steps": 150,
+    "max_len": 96,
+    "max_new_tokens": 64,
+    "seed": 0
+  },
+  "results": {
+    "base, plain prompt": {
+      "json_valid": 0.6733333333333333,
+      "exact_match": 0.0,
+      "exact_event": 0.0,
+      "exact_order": 0.0,
+      "exact_sensor": 0.0
+    },
+    "base, schema + 3-shot prompt": {
+      "json_valid": 1.0,
+      "exact_match": 1.0,
+      "exact_event": 1.0,
+      "exact_order": 1.0,
+      "exact_sensor": 1.0
+    },
+    "LoRA adapter, plain prompt": {
+      "json_valid": 1.0,
+      "exact_match": 1.0,
+      "exact_event": 1.0,
+      "exact_order": 1.0,
+      "exact_sensor": 1.0
+    }
+  },
+  "trainable_params": 2162688,
+  "total_params": 496195456,
+  "train_seconds": 84.3,
+  "loss_first": 1.6029443740844727,
+  "loss_last": 7.861109043005854e-05,
+  "test_hash": "3a035232aebcac00"
+}
