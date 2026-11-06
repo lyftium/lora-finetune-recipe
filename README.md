@@ -1,14 +1,12 @@
-# LoRA Fine-Tune Recipe — baseline first, lineage kept
+# LoRA fine-tune recipe
 
 ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg)
 
-| | |
-|---|---|
-| **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter’s contribution is unclear. |
-| **Verify** | [`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes in [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json) |
-| **Status** | One CLI: score base → train LoRA / QLoRA → score again on the **same** held-out set → report next to git / config / data hashes. Few-shot prompting alone reaches exact_match **0.8** on that hash — so an adapter vs an unprompted base is not the fair story. |
+Fine-tuning write-ups often compare an adapter to a model that was given no examples. I wrote a small CLI that scores the base model, trains a LoRA or QLoRA adapter, scores the same held-out set again, and stores the git commit, config hash, and data hash with the report.
 
-PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes (mechanics, not multi-GPU quality). QLoRA 7B config is written; not run here. GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
+On this synthetic annotation task (100 held-out examples, one data hash), few-shot prompting alone reached exact match 0.80. That is the baseline the adapter has to beat. The published adapter table still sits next to an unprompted base (exact match 0.00 → 0.97); I leave it in the results section and do not use it as the headline.
+
+PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes, to see how the loop behaves — not a multi-GPU quality run. The QLoRA 7B config is written; I have not run it. Walkthrough: [`docs/DEMO.md`](docs/DEMO.md). GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
 [Task](#the-task) · [Results](#results) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
 
