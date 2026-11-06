@@ -4,7 +4,7 @@
 
 Fine-tuning write-ups often compare an adapter to a model that was given no examples. I wrote a small CLI that scores the base model, trains a LoRA or QLoRA adapter, scores the same held-out set again, and stores the git commit, config hash, and data hash with the report.
 
-On this synthetic annotation task (100 held-out examples, one data hash), few-shot prompting alone reached exact match 0.80. That is the baseline an adapter has to beat. The published adapter score of 0.97 was measured against an unprompted base (0.00), not against that few-shot prompt. Same examples and the same data hash do not make it a matched comparison, so I do not describe 0.97 versus 0.80 as the adapter’s gain.
+On this synthetic annotation task (100 held-out examples, one data hash), few-shot prompting alone reached exact match 0.80. That is the baseline to beat. The adapter reached 0.97 under an **unprompted** evaluation, while the unprompted base was 0.00. Because the prompt condition differs from few-shot, this is not a matched +0.17 adapter gain.
 
 PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes, to see how the loop behaves — not a multi-GPU quality run. The QLoRA 7B config is written; I have not run it. Walkthrough: [`docs/DEMO.md`](docs/DEMO.md). GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
@@ -28,7 +28,7 @@ If the gap is missing knowledge, start with retrieval. Fine-tuning fits format /
 
 Same 100 held-out examples (`test_data_hash` `b89f85e0adae4406`), greedy decoding, 48 new tokens max.
 
-### Fair glance — prompted base (same hash)
+### Prompted baseline first (same examples and data hash)
 
 From [`results/prompted-baseline-qwen/eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json):
 
@@ -40,7 +40,7 @@ From [`results/prompted-baseline-qwen/eval-base-modes.json`](results/prompted-ba
 
 Few-shot closes most of the gap without an adapter. That is the baseline to beat.
 
-### Adapter run (still vs unprompted base)
+### Adapter run — different prompt mode, not a matched comparison
 
 One measured run of `configs/qwen-0.5b-lora.yaml` on CPU (8 cores, torch 2.5.1+cpu, transformers 4.46.3, peft 0.13.2). Raw reports: [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/).
 
@@ -53,7 +53,7 @@ LoRA r=16 on four attention projections: 2.16 M / 496 M trainable (0.44%). 150 s
 
 How to read it:
 
-- Do **not** quote 0.00 → 0.97 as “fine-tuning alone.” The fair prompted baseline is **0.0 → 0.8** fewshot on the same hash; the table above still uses the unprompted base next to the adapter (historical framing).
+- The adapter and few-shot baseline use the same examples and data hash but **different prompt modes**. Do not quote +0.17 as a controlled adapter improvement. Only the unprompted base → adapter comparison is matched at the prompt-mode label; decoding details must be checked in the run configuration.
 - What the run shows: narrow fixed-format task, measured baseline, small adapter, report you can trace to code / config / data.
 - Three remaining adapter errors are feature-control frames. Synthetic data, one seed — not real drawings.
 - Adapter trained before first commit (`git_sha: unknown` in `train_run.json`). Eval reports from commit `26853b1`, config hash `96afd7dff9cf`.
@@ -82,23 +82,35 @@ Plain loop on purpose — every step stays visible. For a bigger job I’d move 
 
 ## Run
 
+Python 3.11+ is required. The small CPU smoke test is the first check; model training and evaluation download weights and take longer. See [`docs/DEMO.md`](docs/DEMO.md) for expected output and the published run conditions.
+
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 pip install -r requirements.lock -r requirements-dev.txt && pip install --no-deps -e .
 pytest
 lora-recipe run --config configs/tiny-cpu.yaml
+```
+
+Expected: tests pass and the tiny run writes its adapter and report under `outputs/`. Separately, the measured Qwen path is:
+
+```bash
 lora-recipe run --config configs/qwen-0.5b-lora.yaml
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --adapter outputs/qwen-0.5b-lora/adapter
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes \
   --out results/prompted-baseline-qwen/eval-base-modes.json
+```
+
+No pretrained Qwen adapter from the 0.97 run is published, so reproducing that row requires training it again. Optional two-process CPU DDP mechanics (not a quality experiment):
+
+```bash
 torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yaml --distributed --skip-baseline
 ```
 
 ## Still open
 
-- Prompted baseline vs adapter on GPU (same hash)
+- Re-run base and adapter under the same prompt and decoding configuration, with clean commit provenance
 - Run `qlora-7b-gpu` and add its report
 - Serve the adapter with vLLM LoRA and compare served outputs to offline eval
 
-MIT
+[MIT license](LICENSE) — Qwen, Hugging Face, PEFT, and other dependencies retain their respective licenses.
