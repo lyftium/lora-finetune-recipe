@@ -4,7 +4,7 @@
 
 Fine-tuning write-ups often compare an adapter to a model that was given no examples. I wrote a small CLI that scores the base model, trains a LoRA or QLoRA adapter, scores the same held-out set again, and stores the git commit, config hash, and data hash with the report.
 
-On this synthetic annotation task (100 held-out examples, one data hash), few-shot prompting alone reached exact match 0.80. That is the baseline the adapter has to beat. The published adapter table still sits next to an unprompted base (exact match 0.00 → 0.97); I leave it in the results section and do not use it as the headline.
+On this synthetic annotation task (100 held-out examples, one data hash), few-shot prompting alone reached exact match 0.80. That is the baseline an adapter has to beat. The published adapter score of 0.97 was measured against an unprompted base (0.00), not against that few-shot prompt. Same examples and the same data hash do not make it a matched comparison, so I do not describe 0.97 versus 0.80 as the adapter’s gain.
 
 PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes, to see how the loop behaves — not a multi-GPU quality run. The QLoRA 7B config is written; I have not run it. Walkthrough: [`docs/DEMO.md`](docs/DEMO.md). GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
