@@ -10,6 +10,7 @@ Run tests and inspect baseline / adapter artefacts. Quote numbers only from the 
 ## Quickstart
 
 ```bash
+pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 pip install -r requirements.lock -r requirements-dev.txt
 pip install --no-deps -e .
 pytest -q
@@ -29,6 +30,7 @@ Compare with published [`eval-base-modes.json`](../results/prompted-baseline-qwe
 
 ## Limitations
 
-- Few-shot prompting reaches exact_match 0.80 on this hash. The adapter’s 0.97 is versus an unprompted base, not versus that few-shot prompt.
+- Few-shot prompting reaches exact_match **0.80**; adapter 0.97 was evaluated unprompted. Same data hash does not make those prompt modes matched, so no controlled +0.17 gain is established
+- Python 3.11+ is required; the CPU torch install is separate from the locked dependencies
 - `tiny-ddp` is two-process mechanics, not multi-GPU quality
 - QLoRA 7B config is written but not run here
