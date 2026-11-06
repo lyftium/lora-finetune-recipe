@@ -4,7 +4,7 @@ Run tests and inspect baseline / adapter artefacts. Quote numbers only from the 
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - CPU is enough for the published path
 
 ## Quickstart
@@ -29,6 +29,6 @@ Compare with published [`eval-base-modes.json`](../results/prompted-baseline-qwe
 
 ## Limitations
 
-- Few-shot prompting alone reaches exact_match **0.8** on this hash — do not treat unprompted 0.0 → adapter 0.97 as “fine-tuning alone”
+- Few-shot prompting reaches exact_match 0.80 on this hash. The adapter’s 0.97 is versus an unprompted base, not versus that few-shot prompt.
 - `tiny-ddp` is two-process mechanics, not multi-GPU quality
 - QLoRA 7B config is written but not run here
