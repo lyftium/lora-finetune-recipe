@@ -53,7 +53,7 @@ LoRA r=16 on four attention projections: 2.16 M / 496 M trainable (0.44%). 150 s
 
 How to read it:
 
-- The adapter and few-shot baseline use the same examples and data hash but **different prompt modes**. Do not quote +0.17 as a controlled adapter improvement. Only the unprompted base → adapter comparison is matched at the prompt-mode label; decoding details must be checked in the run configuration.
+- The adapter and few-shot baseline use the same examples and data hash but **different prompt modes**. Do not quote +0.17 as a controlled adapter improvement. The metrics share a 100-item test hash and the recipe uses greedy decoding with at most 48 new tokens; that does not control for the different few-shot prompt.
 - What the run shows: narrow fixed-format task, measured baseline, small adapter, report you can trace to code / config / data.
 - Three remaining adapter errors are feature-control frames. Synthetic data, one seed — not real drawings.
 - Adapter trained before first commit (`git_sha: unknown` in `train_run.json`). Eval reports from commit `26853b1`, config hash `96afd7dff9cf`.
