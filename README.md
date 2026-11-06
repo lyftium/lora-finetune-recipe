@@ -4,9 +4,9 @@
 
 Fine-tuning is easy to oversell. This repo forces the boring order: measure the base on a held-out set, train a LoRA / QLoRA adapter, evaluate on the **same** split, then write a report next to a run record (git sha, config hash, data hashes, library versions). One CLI — not a notebook that worked once.
 
-> **Start here:** [`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json)  
-> **Stack:** PyTorch · Hugging Face Transformers · PEFT · optional `torchrun` DDP  
-> **Limits:** the published adapter table still quotes the unprompted base; `tiny-ddp` is two-process mechanics (CPU gloo), not multi-GPU quality; QLoRA 7B is written, not run here
+**Start here:** [`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json).
+
+PyTorch, Hugging Face Transformers, PEFT, optional `torchrun` DDP. The published adapter table still quotes the unprompted base; `tiny-ddp` is two-process mechanics (CPU gloo), not multi-GPU quality; QLoRA 7B is written, not run here.
 
 GPU companion: [LoRA Fine-Tuning: Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
