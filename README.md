@@ -1,59 +1,33 @@
-# LoRA Fine-Tune Recipe
+# LoRA fine-tune recipe
 
 ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg)
-### Adapt a model, measure the baseline first, keep a lineage record
 
-A small, reproducible LoRA / QLoRA recipe — the train → eval → record half of an
-MLOps loop — rather than a notebook that worked once. One command evaluates the
-base model, trains an adapter, evaluates on the **same** held-out set, and writes
-a report next to a run record (git sha, config hash, data hashes, library versions).
+Measure the base model on a held-out set, train a LoRA / QLoRA adapter, evaluate on the **same** split, and write a report next to a run record (git sha, config hash, data hashes, library versions). One CLI loop — not a notebook that worked once.
 
 | | |
 |:--|:--|
-| **Problem** | Fine-tuning is often reported without a baseline on the same split, so the adapter's contribution is unclear. |
-| **Verify** | [`docs/DEMO.md`](docs/DEMO.md) · `pytest` (CPU) · `bash scripts/demo_resume.sh` · `lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes` · results in `results/qwen-0.5b-lora/` + `results/prompted-baseline-qwen/` · GPU companion: [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) |
-| **Resume / lineage** | `checkpoint.pt` + `--resume-from` — [docs/resume.md](docs/resume.md); run record keeps git sha, config/data hashes, `resumed` |
-| **Prompted baseline** | Same `test_data_hash`; Qwen base exact_match unprompted **0.0** → fewshot **0.8** ([artefact](results/prompted-baseline-qwen/eval-base-modes.json), [docs](docs/prompted-baseline.md)) |
-| **CI** | ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg) — workflow live under [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| **Status & limits** | Published LoRA report still quotes the **unprompted** base. Prompted modes measured on the same `test_data_hash` under `results/prompted-baseline-*`. `tiny-ddp` proves **two-process DDP mechanics** — **not** multi-GPU quality. QLoRA 7B config written, not run here. CI **enabled** on `main` (see badge). |
-| **Next** | Real multi-GPU DDP with the same lineage record; prompted vs adapter on GPU. |
+| **90 s path** | [`docs/DEMO.md`](docs/DEMO.md) · `results/qwen-0.5b-lora/` · prompted artefact [`results/prompted-baseline-qwen/eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json) |
+| **Stack** | PyTorch · Hugging Face Transformers · PEFT (LoRA / QLoRA) · optional `torchrun` DDP |
+| **Limits** | Published adapter table still quotes the **unprompted** base. `tiny-ddp` = two-process mechanics (CPU gloo), not multi-GPU quality. QLoRA 7B config written, not run here. |
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 pip install -r requirements.lock -r requirements-dev.txt && pip install --no-deps -e .
-pytest                                              # 16 tests, CPU (incl. resume)
-lora-recipe run --config configs/tiny-cpu.yaml      # end-to-end smoke run
-lora-recipe run --config configs/qwen-0.5b-lora.yaml  # a real small model, CPU or GPU
+pytest                                              # CPU (incl. resume)
+lora-recipe run --config configs/tiny-cpu.yaml
+lora-recipe run --config configs/qwen-0.5b-lora.yaml
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --adapter outputs/qwen-0.5b-lora/adapter
-lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes --out results/prompted-baseline-qwen/eval-base-modes.json
+lora-recipe eval --config configs/qwen-0.5b-lora.yaml --all-prompt-modes \
+  --out results/prompted-baseline-qwen/eval-base-modes.json
 torchrun --nproc_per_node=2 -m lora_recipe.cli run --config configs/tiny-ddp.yaml --distributed --skip-baseline
 ```
 
-## Data scientist signals
-
-Same-split **baselines before claiming an adapter helped**; prompted modes on a fixed `test_data_hash` (unprompted exact_match 0.0 → fewshot 0.8); lineage next to scores. Do not quote digits beyond `results/`.
-
-## Integrator signals
-
-Fine-tuning as an **integration** artefact: baseline on the same split, lineage next to the report, resumable checkpoints, SFT mask audit, model-ingest policy (no casual `trust_remote_code` — [`docs/model-ingest.md`](docs/model-ingest.md)), and a CPU lab that shows why **mean-of-means ≠ token-weighted loss** under uneven valid-token counts ([`labs/ddp-token-weighting/`](labs/ddp-token-weighting/)) — without claiming multi-node NCCL experience.
-
-## At a glance
-
-| Area | In this repo |
-|:--|:--|
-| Training | PyTorch, Hugging Face, PEFT (LoRA / QLoRA) |
-| Eval | Baseline vs adapter on the same held-out set |
-| Lineage | git sha, config hash, data hashes, library versions |
-| Resume | `checkpoint.pt` (weights + optimizer + RNG); `--resume-from` |
-| DDP math lab | `labs/ddp-token-weighting/` — CPU NumPy token-weighted loss (**not** NCCL) |
-| SFT mask audit | `tools/inspect_sft_batch.py` + `tests/test_sft_mask.py` |
-| Distributed | torchrun DDP (CPU gloo proven; CUDA nccl wired) |
-| Smoke | Full CPU loop for CI in a few seconds |
+GPU companion notebook: [LoRA Fine-Tuning: Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
 ## The task
 
-A deliberately narrow synthetic task: turn the text of a drawing annotation into JSON fields.
+Synthetic drawing annotations → JSON fields. Fixed format, closed vocabulary, exact labels — fine-tuning is a reasonable answer and scoring is unambiguous.
 
 ```
 Annotation: POS|0.05|A|B         ->  {"characteristic":"POS","tolerance":0.05,"datums":["A","B"]}
@@ -61,68 +35,60 @@ Annotation: 42.50 +0.02/-0.02    ->  {"nominal":42.5,"upper":0.02,"lower":-0.02}
 Annotation: 3 | PRT-417 | QTY 2  ->  {"item":3,"part_number":"PRT-417","quantity":2}
 ```
 
-I picked it because it is the kind of case where fine-tuning is a reasonable answer: a fixed output format and a closed vocabulary. It can also be generated with exact labels, so scoring is unambiguous. Train and test come from different seeds and are de-duplicated against each other, so no test prompt is seen in training. All the data is made up.
+Train and test come from different seeds and are de-duplicated. Two scores: **json_valid** (parses) and **exact_match** (every field correct), also broken down by annotation type.
 
-Two scores, because they fail differently:
+## What’s in the repo
 
-- **json_valid**: the output parses as a JSON object (format compliance)
-- **exact_match**: every expected field has the expected value (task correctness), also broken down per annotation type
-
-## What's in here
-
-| Path | What it does |
+| Path | Role |
 |---|---|
 | `src/lora_recipe/data.py` | synthetic task, leak-free splits |
-| `src/lora_recipe/model.py` | base model + LoRA (PEFT); QLoRA with a 4-bit NF4 base via bitsandbytes |
-| `src/lora_recipe/train.py` | a plain training loop, loss on answer tokens only (prompt masked); optional DDP |
-| `src/lora_recipe/evaluate.py` | greedy decoding, json_valid / exact_match |
-| `src/lora_recipe/lineage.py` | run record: git sha, hashes, versions |
-| `configs/` | `tiny-cpu` (smoke), `tiny-ddp` (multi-process), `qwen-0.5b-lora`, `qlora-7b-gpu` |
-| `results/tiny-ddp/` | measured 2-process DDP run record |
-| `tests/` | leak-free splits, adapters-only trainable, DDP env helpers, QLoRA refused on CPU |
+| `src/lora_recipe/model.py` | base + LoRA (PEFT); QLoRA via bitsandbytes 4-bit NF4 |
+| `src/lora_recipe/train.py` | plain loop; loss on answer tokens only; optional DDP |
+| `src/lora_recipe/evaluate.py` | greedy decode; json_valid / exact_match |
+| `src/lora_recipe/lineage.py` | run record |
+| `configs/` | `tiny-cpu`, `tiny-ddp`, `qwen-0.5b-lora`, `qlora-7b-gpu` |
+| `docs/resume.md` | `checkpoint.pt` + `--resume-from` |
+| `docs/model-ingest.md` | no casual `trust_remote_code` |
+| `docs/prompted-baseline.md` | same `test_data_hash` across prompt modes |
+| `labs/ddp-token-weighting/` | CPU NumPy: why mean-of-means ≠ token-weighted loss |
+| `tools/inspect_sft_batch.py` | SFT mask audit |
 
-The plain loop is on purpose: it keeps every step visible (masking, padding side, what gets saved). For a bigger job I'd move to the HF `Trainer` or TRL, not rewrite this.
+The plain loop is intentional — every step stays visible. For a bigger job I’d move to HF `Trainer` / TRL, not rewrite this.
 
 ## LoRA vs QLoRA
 
-LoRA freezes the base weights and trains small low-rank matrices next to chosen layers (here the attention projections). Only the adapter is saved, a few MB, and one base model can serve several adapters.
+LoRA freezes the base and trains low-rank matrices on chosen layers (here attention projections). Only the adapter is saved. QLoRA does the same on a 4-bit NF4 base with bf16 compute; bitsandbytes needs CUDA, so on CPU the recipe refuses QLoRA instead of silently falling back. `qlora-7b-gpu` is written but **not run in this repo**.
 
-QLoRA does the same on top of a base loaded in 4-bit NF4, with bf16 compute. It is what makes a 7B model trainable on a single GPU. bitsandbytes needs CUDA, so on CPU the recipe refuses QLoRA with a clear error instead of silently falling back. The `qlora-7b-gpu` config is written but **I have not run it in this repo**.
+## When I wouldn’t fine-tune
 
-## When I wouldn't fine-tune
-
-If the problem is missing knowledge (documents, standards, part data that changes), retrieval is usually the better first step: cheaper, easier to update, and the sources can be cited. Fine-tuning earns its place for format, style or a narrow behaviour that prompting can't hold reliably, and only once there is an evaluation set to prove it helped. That's why the baseline is always measured first.
+If the gap is missing knowledge (docs, standards, changing part data), start with retrieval. Fine-tuning earns its place for format / style / narrow behaviour that prompting can’t hold — and only once an evaluation set can prove it helped. That’s why the baseline is measured first.
 
 ## Results
 
-One measured run of `configs/qwen-0.5b-lora.yaml` on a CPU-only machine (8 cores, torch 2.5.1+cpu, transformers 4.46.3, peft 0.13.2). Same 100 held-out synthetic examples for both rows (test data hash `b89f85e0adae4406`), greedy decoding, 48 new tokens max. The raw reports are in [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/).
+One measured run of `configs/qwen-0.5b-lora.yaml` on CPU (8 cores, torch 2.5.1+cpu, transformers 4.46.3, peft 0.13.2). Same 100 held-out examples for both rows (`test_data_hash` `b89f85e0adae4406`), greedy decoding, 48 new tokens max. Raw reports: [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/).
 
 | Qwen2.5-0.5B-Instruct | json_valid | exact_match | FCF (n=30) | dimension (n=33) | BOM row (n=37) |
 |---|---|---|---|---|---|
-| base model, no adapter | 0.66 | 0.00 | 0.00 | 0.00 | 0.00 |
+| base, no adapter | 0.66 | 0.00 | 0.00 | 0.00 | 0.00 |
 | + LoRA adapter | 1.00 | 0.97 | 0.90 | 1.00 | 1.00 |
 
-LoRA r=16 on the four attention projections: 2.16M trainable parameters out of 496M (0.44%). 150 steps at batch size 8 took 559 s on CPU; training loss went from 2.23 to 0.0003.
+LoRA r=16 on four attention projections: 2.16 M / 496 M trainable (0.44%). 150 steps, batch 8, 559 s on CPU; train loss 2.23 → 0.0003.
 
-How to read it, honestly:
+How to read it:
 
-- The base model gets 0% exact match mostly because the prompt never tells it the schema. It answers with JSON of its own invention (`{"fields": [{"name": ...}]}`), and 34% of its answers don't parse at all (in the ones I inspected, generation hit the 48-token limit before the JSON closed). A fair comparison against prompting would add the schema and a few examples to the prompt; I haven't run that yet, and it would likely close part of the gap.
-- What the run does show is the point of the recipe: a narrow, fixed-format task, a baseline measured first on the same split, a small adapter, and a report you can trace back to code, config and data.
-- The 3 remaining errors are all feature control frames. This is synthetic data on one seed, not a claim about real drawings.
-- The adapter was trained before the first commit, so `train_run.json` has `git_sha: unknown`. Both eval reports were produced from commit `26853b1` with the same config hash (`96afd7dff9cf`).
+- The unprompted base gets 0% exact match mostly because the prompt never states the schema (34% of answers don’t even parse). A fairer comparison adds schema + few-shot on the **same** `test_data_hash`: exact_match **0.0 → 0.8** ([artefact](results/prompted-baseline-qwen/eval-base-modes.json)). The published table above still quotes the unprompted base for the adapter column.
+- What the run shows: narrow fixed-format task, baseline first, small adapter, report you can trace to code / config / data.
+- The 3 remaining errors are all feature-control frames. Synthetic data, one seed — not a claim about real drawings.
+- The adapter was trained before the first commit (`git_sha: unknown` in `train_run.json`). Both eval reports are from commit `26853b1`, same config hash (`96afd7dff9cf`).
 
 ## Distributed training
 
-See [`docs/distributed-training.md`](docs/distributed-training.md) and [`results/tiny-ddp/`](results/tiny-ddp/). Cluster submit YAML lives next door in drawing-review-service `deploy/openshift/pytorchjob-ddp.yaml`.
+See [`docs/distributed-training.md`](docs/distributed-training.md) and [`results/tiny-ddp/`](results/tiny-ddp/). Cluster submit YAML lives in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/openshift/pytorchjob-ddp.yaml`.
 
-## Not done yet
+## Still open
 
-- A prompted baseline (schema + few-shot) on the same split.
-- Running the QLoRA 7B config on a GPU and adding its report.
-- Serving the adapter with vLLM LoRA support and checking served outputs against offline eval.
+- Prompted baseline vs adapter on GPU (same hash).
+- Run `qlora-7b-gpu` and add its report.
+- Serve the adapter with vLLM LoRA and compare served outputs to offline eval.
 
-## CI
-
-The workflow is in `ci/github-actions-ci.yml` (lint + tests on CPU). To enable it, move it to `.github/workflows/ci.yml` (needs GitHub `workflow` scope).
-
-MIT licence.
+MIT
