@@ -2,13 +2,13 @@
 
 ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg)
 
-Evaluate the base on a held-out set, train a LoRA / QLoRA adapter, evaluate on the **same** split, write a report with git / config / data hashes. One CLI loop with lineage next to the scores.
+A small recipe that refuses to skip the baseline.
 
-[`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json)
+One CLI: score the base on a held-out set, train a LoRA / QLoRA adapter, score again on the **same** split, write a report next to git / config / data hashes. The awkward finding is in the first results table — few-shot prompting alone gets exact_match to **0.8** on that hash, so an adapter compared only to an unprompted base looks more heroic than it is.
 
-PyTorch · Hugging Face Transformers · PEFT · optional `torchrun` DDP. `tiny-ddp` is two-process mechanics (CPU gloo), not multi-GPU quality. QLoRA 7B is written, not run here.
+[`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json)
 
-GPU companion: [LoRA Fine-Tuning: Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
+PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes learning the mechanics, not multi-GPU quality. QLoRA 7B config is written; I have not run it here. GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
 [Task](#the-task) · [Results](#results) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
 
