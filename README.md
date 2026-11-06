@@ -2,11 +2,11 @@
 
 ![CI](https://github.com/lyftium/lora-finetune-recipe/actions/workflows/ci.yml/badge.svg)
 
-Fine-tuning is easy to oversell. This repo forces the boring order: measure the base on a held-out set, train a LoRA / QLoRA adapter, evaluate on the **same** split, then write a report next to a run record (git sha, config hash, data hashes, library versions). One CLI — not a notebook that worked once.
+Evaluate the base on a held-out set, train a LoRA / QLoRA adapter, evaluate on the **same** split, write a report with git / config / data hashes. One CLI loop with lineage next to the scores.
 
-**Start here:** [`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json).
+[`docs/DEMO.md`](docs/DEMO.md) · [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/) · prompted modes [`eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json)
 
-PyTorch, Hugging Face Transformers, PEFT, optional `torchrun` DDP. The published adapter table still quotes the unprompted base; `tiny-ddp` is two-process mechanics (CPU gloo), not multi-GPU quality; QLoRA 7B is written, not run here.
+PyTorch · Hugging Face Transformers · PEFT · optional `torchrun` DDP. `tiny-ddp` is two-process mechanics (CPU gloo), not multi-GPU quality. QLoRA 7B is written, not run here.
 
 GPU companion: [LoRA Fine-Tuning: Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
@@ -14,7 +14,7 @@ GPU companion: [LoRA Fine-Tuning: Baseline vs Adapter](https://www.kaggle.com/co
 
 ## The task
 
-Synthetic drawing annotations → JSON fields. Fixed format, closed vocabulary, exact labels — the kind of problem where fine-tuning is a reasonable answer and scoring is unambiguous.
+Synthetic drawing annotations → JSON fields. Fixed format, closed vocabulary, exact labels — scoring is unambiguous.
 
 ```
 Annotation: POS|0.05|A|B         ->  {"characteristic":"POS","tolerance":0.05,"datums":["A","B"]}
@@ -22,27 +22,43 @@ Annotation: 42.50 +0.02/-0.02    ->  {"nominal":42.5,"upper":0.02,"lower":-0.02}
 Annotation: 3 | PRT-417 | QTY 2  ->  {"item":3,"part_number":"PRT-417","quantity":2}
 ```
 
-Train and test come from different seeds and are de-duplicated. Two scores: **json_valid** (parses) and **exact_match** (every field correct), also broken down by annotation type.
+Train and test come from different seeds and are de-duplicated. Scores: **json_valid** and **exact_match** (also by annotation type).
 
-If the gap is missing knowledge — documents, standards, part data that changes — start with retrieval. Fine-tuning earns its place for format, style, or a narrow behaviour prompting can’t hold, and only once an evaluation set can prove it helped.
+If the gap is missing knowledge, start with retrieval. Fine-tuning fits format / style / narrow behaviour that prompting can’t hold — once an evaluation set can prove it helped.
 
 ## Results
 
-One measured run of `configs/qwen-0.5b-lora.yaml` on CPU (8 cores, torch 2.5.1+cpu, transformers 4.46.3, peft 0.13.2). Same 100 held-out examples for both rows (`test_data_hash` `b89f85e0adae4406`), greedy decoding, 48 new tokens max. Raw reports live under [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/).
+Same 100 held-out examples (`test_data_hash` `b89f85e0adae4406`), greedy decoding, 48 new tokens max.
+
+### Fair glance — prompted base (same hash)
+
+From [`results/prompted-baseline-qwen/eval-base-modes.json`](results/prompted-baseline-qwen/eval-base-modes.json):
+
+| Base prompt mode | json_valid | exact_match |
+|---|---:|---:|
+| unprompted | 0.66 | 0.00 |
+| schema | 0.78 | 0.03 |
+| fewshot | 1.00 | **0.80** |
+
+Few-shot closes most of the gap without an adapter. That is the baseline to beat.
+
+### Adapter run (still vs unprompted base)
+
+One measured run of `configs/qwen-0.5b-lora.yaml` on CPU (8 cores, torch 2.5.1+cpu, transformers 4.46.3, peft 0.13.2). Raw reports: [`results/qwen-0.5b-lora/`](results/qwen-0.5b-lora/).
 
 | Qwen2.5-0.5B-Instruct | json_valid | exact_match | FCF (n=30) | dimension (n=33) | BOM row (n=37) |
 |---|---|---|---|---|---|
-| base, no adapter | 0.66 | 0.00 | 0.00 | 0.00 | 0.00 |
+| base, **unprompted** | 0.66 | 0.00 | 0.00 | 0.00 | 0.00 |
 | + LoRA adapter | 1.00 | 0.97 | 0.90 | 1.00 | 1.00 |
 
 LoRA r=16 on four attention projections: 2.16 M / 496 M trainable (0.44%). 150 steps, batch 8, 559 s on CPU; train loss 2.23 → 0.0003.
 
 How to read it:
 
-- The unprompted base gets 0% exact match mostly because the prompt never states the schema (34% of answers don’t even parse). A fairer comparison adds schema + few-shot on the **same** `test_data_hash`: exact_match **0.0 → 0.8** ([artefact](results/prompted-baseline-qwen/eval-base-modes.json)). The table above still quotes the unprompted base next to the adapter.
-- What the run shows: a narrow fixed-format task, a baseline first, a small adapter, and a report you can trace to code / config / data.
-- The three remaining errors are all feature-control frames. Synthetic data, one seed — not a claim about real drawings.
-- The adapter was trained before the first commit (`git_sha: unknown` in `train_run.json`). Both eval reports are from commit `26853b1`, same config hash (`96afd7dff9cf`).
+- Do **not** quote 0.00 → 0.97 as “fine-tuning alone.” The fair prompted baseline is **0.0 → 0.8** fewshot on the same hash; the table above still uses the unprompted base next to the adapter (historical framing).
+- What the run shows: narrow fixed-format task, measured baseline, small adapter, report you can trace to code / config / data.
+- Three remaining adapter errors are feature-control frames. Synthetic data, one seed — not real drawings.
+- Adapter trained before first commit (`git_sha: unknown` in `train_run.json`). Eval reports from commit `26853b1`, config hash `96afd7dff9cf`.
 
 ## Layout
 
@@ -60,11 +76,11 @@ How to read it:
 | `labs/ddp-token-weighting/` | CPU NumPy: why mean-of-means ≠ token-weighted loss |
 | `tools/inspect_sft_batch.py` | SFT mask audit |
 
-The plain loop is intentional — every step stays visible. For a bigger job I’d move to HF `Trainer` / TRL rather than rewrite this.
+Plain loop on purpose — every step stays visible. For a bigger job I’d move to HF `Trainer` / TRL.
 
-**LoRA vs QLoRA.** LoRA freezes the base and trains low-rank matrices on chosen layers (here attention projections); only the adapter is saved. QLoRA does the same on a 4-bit NF4 base with bf16 compute. bitsandbytes needs CUDA, so on CPU the recipe refuses QLoRA instead of silently falling back. `qlora-7b-gpu` is written but not run here.
+**LoRA vs QLoRA.** LoRA freezes the base and trains low-rank matrices on attention projections; only the adapter is saved. QLoRA uses a 4-bit NF4 base with bf16 compute; on CPU the recipe refuses QLoRA instead of silently falling back. `qlora-7b-gpu` is written but not run here.
 
-**Distributed.** [`docs/distributed-training.md`](docs/distributed-training.md) and [`results/tiny-ddp/`](results/tiny-ddp/). Cluster submit YAML lives next door in [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/openshift/pytorchjob-ddp.yaml`.
+**Distributed.** [`docs/distributed-training.md`](docs/distributed-training.md) · [`results/tiny-ddp/`](results/tiny-ddp/). Cluster submit YAML: [drawing-review-service](https://github.com/lyftium/drawing-review-service) `deploy/openshift/pytorchjob-ddp.yaml`.
 
 ## Run
 
@@ -72,7 +88,7 @@ The plain loop is intentional — every step stays visible. For a bigger job I�
 python -m venv .venv && . .venv/bin/activate
 pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 pip install -r requirements.lock -r requirements-dev.txt && pip install --no-deps -e .
-pytest                                              # CPU (incl. resume)
+pytest
 lora-recipe run --config configs/tiny-cpu.yaml
 lora-recipe run --config configs/qwen-0.5b-lora.yaml
 lora-recipe eval --config configs/qwen-0.5b-lora.yaml --adapter outputs/qwen-0.5b-lora/adapter
