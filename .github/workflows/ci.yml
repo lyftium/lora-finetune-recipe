@@ -1,4 +1,3 @@
-# Move to .github/workflows/ci.yml to enable (see the README).
 name: ci
 on: [push, pull_request]
 jobs:
