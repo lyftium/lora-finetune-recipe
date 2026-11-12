@@ -8,7 +8,7 @@ On this synthetic annotation task (100 held-out examples, one data hash), few-sh
 
 PyTorch, Hugging Face, PEFT. `tiny-ddp` is two CPU processes, to see how the loop behaves — not a multi-GPU quality run. The QLoRA 7B config is written; I have not run it. Walkthrough: [`docs/DEMO.md`](docs/DEMO.md). GPU notebook: [Baseline vs Adapter](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter).
 
-[Task](#the-task) · [Results](#results) · [Benchmark reports](BENCHMARK.md) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
+[Demo](docs/DEMO.md) · [Task](#the-task) · [Results](#results) · [Benchmark](BENCHMARK.md) · [Kaggle notebook](https://www.kaggle.com/code/lyftium/lora-fine-tuning-baseline-vs-adapter) · [Layout](#layout) · [Run](#run) · [Still open](#still-open)
 
 ## The task
 
